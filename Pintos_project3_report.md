@@ -44,11 +44,13 @@ struct inode
 ### cache.c
 - We creaete the cache.c to implement buffer cache in term of task1's demands
 ```c
-void cache_read (struct block *fs_device, block_sector_t sector_index, void *destination,off_t offset, int chunk_size);
+void cache_read (struct block *fs_device, block_sector_t sector_index, 
+void *destination,off_t offset, int chunk_size);
 ```
 - Read the chunk_size byte data in the cache from the sector_index in the cache.
 ```c
-void cache_write (struct block *fs_device, block_sector_t sector_index, void *source, off_t offset, int chunk_size);
+void cache_write (struct block *fs_device, block_sector_t 
+sector_index, void *source, off_t offset, int chunk_size);
 ```
 - The chunk_size bytes of data are written to the cache, starting with the sector index offset from the source location.
 ```c
