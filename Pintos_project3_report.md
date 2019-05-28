@@ -70,8 +70,16 @@ struct block_in_cache
   };
 ```
 - This is cache block, each block can hold BLOCK_SECTOR_SIZE bytes of data. 
+### filesys.c
+```c
+void filesys_init(bool format);
+```
+- Initializes the file system module.If FORMAT is true, reformats the file system.
 ## II. Algorithms and implementations
-
+### Main Algorithm
+- The main purpose of this Buffer cache is to design a cache in the filesystem to improve the performance of reading and writing, so the main algorithm is we can respond to reads with cached data and we can coalesce multiple writes into a single disk operation. And We choose a block replacement policy and we design a write-back cache efficiently.
+### Specific Algorithms
+- **Step1:**
 ## Synchronization
 
 ## Rationale
