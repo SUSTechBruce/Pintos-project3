@@ -2,8 +2,10 @@
 # Pintos Project3 Report: File System
 :+1: Pintos project_3  - for SUSTech OS  :shipit:
 ## Group members
+```
 11612201 Wan zhongwei ： Task1, Task2, Final report
 11612121 Liu bin      :  Task2, Task3, Answer Qustion and Reflection
+```
 ## Qustion and Reflection
 - When one process is actively reading or writing data in a buffer cache block, how are other processes prevented from evicting that block?
 ```
