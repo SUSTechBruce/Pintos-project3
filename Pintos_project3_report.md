@@ -231,9 +231,26 @@ struct file *file = get_file (thread_current (), fd);
 }
 ```
 ## Synchronization
-
+In Task 2, we will use the lock acquire and lock release to implement Acquire the lock of INODE, as follows:
+```c
+void
+inode_acquire_lock (struct inode *inode)
+{
+  lock_acquire (&(inode->inode_lock));
+}
+```
+- Acquire the lock of INODE.
+```c
+void
+inode_release_lock (struct inode *inode)
+{
+  lock_release (&(inode->inode_lock));
+}
+```
+- Release the lock of INODE.
+At the same time, in order to ensure the synchronization of the program, we also use free_map_allocate (), free_map_release (),We created a lock for free_map that will get/release the lock when free_map_allocate() and free_map_release() are called. Since free_map is accessed as a static variable rather than as a file, it does not pass the cache, so it must have its own synchronization through the lock.
 ## Rationale
-
+In order to ensure the correctness and rationality of the program, we implemented inode_allocate to replace free_map_allocate() according to the direct, indirect, and doule-link allocate methods. According to these implementations, the previous pintos version can only be used to complete each file. As a single contiguous set of blocks, can not extend the size of files.
 
 ## Task3: Subdirectories
 ## Data structure and functions
