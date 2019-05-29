@@ -489,4 +489,6 @@ dir_release_lock (struct dir *dir)
 - Associate the inode and dir structures in the directory path. By treating each level in the directory tree as a separate directory, we can recursively traverse the "tree" and simplify the logic of accessing different files/directories. In addition, by keeping the first dir entry as the holder of the parent directory sector, it allows us to easily handle the ".." situation when parsing the directory tree.
 
 # Reference
+- https://github.com/songhan/CS140/blob/master/src/filesys/DESIGNDOC
+- https://github.com/diegs/cs140/blob/master/src/filesys/DESIGNDOC
 
