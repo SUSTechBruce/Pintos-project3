@@ -86,13 +86,13 @@ void filesys_init(bool format);
 - **Step5:**  Read operations and write operations have similarities, the purpose is read chunk_size bytes of data from cache starting from numsector at position offest, into destination. We also need to complete `cache_get_block_index ()` acquires `cache_block_lock` at `index` i. Then call 
 ```c
 memcpy (destination, cache[i ].data + offset, chunk_size);
-```.
+```
 
 - **Step6** Next, implement a function replace cache(), the purpose is to replace the cache entry at index to contain data from sector_index. The core algorithm is Read in and write from device at `disk_sector_index` to data. We need to call 
 ```c
 block_read (fs_device, sector_index, cache[index ].data);
 ```
-- **Step6:** Next we need to implement another important function, the purpose of this function is to write the block at index to disk, the core algorithm step is very simple, that is, write from data to device at disk sector index. So we need to call
+- **Step7:** Next we need to implement another important function, the purpose of this function is to write the block at index to disk, the core algorithm step is very simple, that is, write from data to device at disk sector index. So we need to call
 ```c
 block_write (fs_device, cache[index].disk_sector_index, cache[index].data);
 ```
