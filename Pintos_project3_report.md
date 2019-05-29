@@ -267,7 +267,7 @@ struct fd
 - struct fd contains struct dir.
 ```c
 struct thread {
-  struct dir *working_dir;
+  struct dir *directory_working;
 };
 ```
 - new add struct to record woring diretory.
@@ -302,11 +302,11 @@ struct inode_disk {
 In this task task, we mainly need to implement functions such as `chdir`, `mkdir`, `readdir`, and `isdir`, and complete user program to manipulate directories. Make first user process should have the root directory as its current working directory.
 - **Step1：** Implementing `syscall_chir()` First we need to call dir_open_directory () to get the current dir, if dir is not null, call `dir_close (thread_current ()->working_dir)`, and make the thread's `working_dir` set to the current `dir`, the specific implementation is as follows:
 ```c
-struct dir *dir = dir_open_directory (name);
-  if (dir != NULL)
+struct dir *direcory = dir_open_directory (name);
+  if (direcory != NULL)
     {
-      dir_close (thread_current ()->working_dir);
-      thread_current ()->working_dir = dir;
+      dir_close (thread_current ()->directory_working);
+      thread_current ()->working_dir = direcory;
       *eax = true;
     }
   else
