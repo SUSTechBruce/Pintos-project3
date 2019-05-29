@@ -260,7 +260,6 @@ static void syscall_chdir (uint32_t *args UNUSED, uint32_t *eax UNUSED);
 static void syscall_mkdir (uint32_t *args UNUSED, uint32_t *eax UNUSED);
 static void syscall_readdir (uint32_t *args UNUSED, uint32_t *eax UNUSED);
 static void syscall_isdir (uint32_t *args UNUSED, uint32_t *eax UNUSED);
-static void syscall_inumber (uint32_t *args UNUSED, uint32_t *eax UNUSED);
 static void syscall_invcache (uint32_t *args UNUSED, uint32_t *eax UNUSED);
 static void syscall_cachestat (uint32_t *args UNUSED, uint32_t *eax UNUSED);
 static void syscall_diskstat (uint32_t *args UNUSED, uint32_t *eax UNUSED);
@@ -283,6 +282,11 @@ struct thread {
 ```
 - new add struct to record woring diretory.
 ### directory.c
+```c
+bool dir_readdir (struct dir *dir, char name[NAME_MAX + 1]).
+```
+- Reads the next directory entry in DIR and stores the name in NAME.  Returns true if successful, false if the directory
+contains no more entries.
 ```c
 struct dir
   {
@@ -320,6 +324,7 @@ bool inode_create (block_sector_t sector, off_t length, bool is_dir);
 ## Algorithm and implenmentation
 ### Main Algorithm
 In this task task, we mainly need to implement functions such as `chdir`, `mkdir`, `readdir`, and `isdir`, and complete user program to manipulate directories. Make first user process should have the root directory as its current working directory.
+### Specific Algorithm
 - **Step1：** Implementing `syscall_chir()` First we need to call dir_open_directory () to get the current dir, if dir is not null, call `dir_close (thread_current ()->working_dir)`, and make the thread's `working_dir` set to the current `dir`, the specific implementation is as follows:
 ```c
 struct dir *direcory = dir_open_directory (name);
@@ -333,12 +338,79 @@ struct dir *direcory = dir_open_directory (name);
     *eax = false;
 }
 ```
-- **Step2:**
-### Specific Algorithm
+- **Step2:** Implementing `syscall_mkdir()`. First, we determine the format of the parameter is legal and the address of the parameter is legal. args_valid() and arg_addr_valid() are called. If it is not legal, it returns -1 and calls exit(). Second, call filesys_create() to create the file. The specific implementation is as follows:
 
+```c
+   char *file_name = (char *) args[0];
+  *eax = filesys_create (file_name, 0, true);
+```
+- **Step3:** Implementing `syscall_readdir()`. First, we also determine that the format of the parameter is legal and the address of the parameter is legal. `args_valid()` and `arg_addr_valid()` are called. If it is not legal, it returns -1 and calls `exit()`. Second, use get file to get the current thread's file for judgment. If it is legal, call `file_get_inode()`to get the current file inode. Third, the inode value is judged. If it is not empty, `get_fd_dir()` and `dir_readdir()` are called for processing. Important processes are here:
+
+```c
+struct file *file = get_file (thread_current (), fd);
+struct inode *inode = file_get_inode (file);
+struct dir *dir = get_fd_dir (thread_current (), fd);
+```
+- **Step4:** Implementing `syscall_isdir()`. First, we also determine if the format of the parameter is legal, call `args_valid()`, if it is not legal, return -1 and call `exit()`. Second, use get file to get the current thread's file for judgment. If it is legal, call `file_get_inode()` to get the current file inode. And call `inode_is_dir ()` to return the `eax` value.
+```c
+  struct file *f_name = get_file (thread_current (), fd);
+  if (file)
+    {
+      struct inode *inode_ele = file_get_inode (f_name);
+      *eax = inode_is_dir (inode_ele);
+    }
+```
+- **Step5:** Implementing `syscall_invcache()`. call the function as follow directly.
+```c
+cache_invalidate (fs_device);
+```
+- **Step5:** Implementing `syscall_cachestat ()`. First, we also determine the format of the parameter, and whether the parameters of the address are legal, call args_valid (args, 3) and arg_addr_valid (). If it is legal, call cache_get_stats() directly to return the current cache state value.
+```c
+cache_get_stats ((long long *) args[0], (long long *) args[1], (long long *) args[2]);
+```
+- **Step6:** Implementing `syscall_diskstat ()`,First, we also determine the format of the parameter, and whether the parameters of the address are valid, `call args_valid()`and `arg_addr_valid ()`. If the args are valid, call
+```c
+block_get_stats (fs_device, (long long *) args[0], (long long *) args[1]);
+```
 ## Synchronization
-
+- Add the struct lock in struct dir, A single lock is associated with each dir structure. This lock is used whenever a thread-safe operation is performed using dir
+```c
+struct dir
+  {
+    struct inode *inode;                /* Backing store. */
+    off_t pos;                          /* Current position. */
+    struct lock dir_lock;
+  };
+```
+- Implement lock of dir:
+```c
+/* Acquire the lock of DIR. */
+void
+dir_acquire_lock (struct dir *dir)
+{
+  lock_acquire (&(dir->dir_lock));
+}
+```
+```c
+/* Release the lock of DIR. */
+void
+dir_release_lock (struct dir *dir)
+{
+  lock_release (&(dir->dir_lock));
+}
+```
+- For example, in the process of creating dir, call dir_acquire_lock () to lock dir to ensure program synchronization.
+```c
+/* Acquire dir lock */
+      dir_acquire_lock (curr_dir);
+      if (inode_write_at (dir_get_inode (curr_dir), &e, sizeof (e), 0) != sizeof (e))
+        success = false;
+/* Release dir lock */
+      dir_release_lock (curr_dir);
+      dir_close (curr_dir);
+```
 ## Rationale
+- Associate the inode and dir structures in the directory path. By treating each level in the directory tree as a separate directory, we can recursively traverse the "tree" and simplify the logic of accessing different files/directories. In addition, by keeping the first dir entry as the holder of the parent directory sector, it allows us to easily handle the ".." situation when parsing the directory tree.
 
 # Reference
 
