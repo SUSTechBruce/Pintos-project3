@@ -170,7 +170,66 @@ void deallocate_indirect_inode(block_sector_t sector_num, size_t cnt);
 ```
 - Deallocate indirect block
 ## Algorithm and implenmentation
+### Main Algorithm
+- In this Extensible files, we focus on the use of indexed inode structure with direct, indirect, and doubly-indirect pointers, like the Unix file system does. Also need to implement this `inumber(int fd)`, which returns The unique inode number of file associated with a particular file descriptor.
+### Specific Algorithm
 
+- **Step1:** First of all, we need to implement the function of allocate direct blocks in the main function of allocate inode. First, we need to get number of sector needed and call `bytes_to_sectors (length)`. Second, the core algorithm is 
+```c
+for (i = 0; i < min (num_sectors, DIRECT_BLOCK_COUNT); i++)
+    if (!inode_allocate_sector (&disk_inode->direct_blocks[i]))
+      return false;
+  sectors_num  = sectors_num - j;
+if (num_sectors == 0) {
+    return true;
+}
+```
+- **Step2** Second, we need to implement the allocate indirect inode, the specific steps are: First, determine Allocate indirect block sector if it hasn't been, meet the condition, return false. Second, read in the indirect block from cache, call 
+```c 
+cache_read (fs_device, *sector_num, &indirect_block, 0, BLOCK_SECTOR_SIZE);
+```
+third, allocate number of sectors needed. Specific steps:
+```c
+for (i = 0; i < cnt; i++)
+    if (!inode_allocate_sector (&indirect_block.block[i]))
+      return false;
+```
+Fourth, write it to the disk, call 
+```c
+cache_write (fs_device, *sector_num, &indirect_block, 0, BLOCK_SECTOR_SIZE);
+```
+- **Step3:** Next, we need to implement the allocate Doubly-Indirect Block function. The specific steps are as follows: First, we need to determine the allocate doubly-indirect block sector if it hasn't been , if it meets the condition, it returns false. Second, read the indirect block in the cache, call 
+```c
+cache_read (fs_device, *sector_num, &indirect_block, 0, BLOCK_SECTOR_SIZE);
+```
+third, allocate number of indirect blocks needed.
+```c
+ize_t sector_num, i, j = DIV_ROUND_UP (cnt, INDIRECT_BLOCK_COUNT);
+  for (i = 0; i < j; i++)
+    {
+      sector_num = min (cnt, INDIRECT_BLOCK_COUNT);
+      if (!inode_allocate_indirect (&indirect_block.block[i], num_sectors))
+        return false;
+      cnt -= sector_num;
+    }
+```
+fourth, write it to disk, call 
+```c
+cache_write (fs_device, *sector_num, &indirect_block, 0, BLOCK_SECTOR_SIZE);
+```
+- **Step4:** Next, we need to implement allocate inode (), first, we need to call `bytes_to_sectors (inode->data.length)` to calculate number of block sectors occupied, second, In the order of direct, indirect, doubly-indirect, call `Free_map_release ()` until all the block sectors used are freed.
+- **Step5:** To implement `syscall_inumber (uint32_t *args UNUSED, uint32_t *eax UNUSED)`, the first step is to call `et_file (thread_current (), fd)` to get the file of the current thread, and determine the file. If the condition is true, call `file_get_inode()` and `inode_get_inumber()` to returns INODE's inode number. The implementation process is as follows
+```c
+struct file *file = get_file (thread_current (), fd);
+  if (file)
+    {
+      struct inode *inode = file_get_inode (file);
+      *eax = (int) inode_get_inumber (inode);
+    }
+  else
+    *eax = -1;
+}
+```
 ## Synchronization
 
 ## Rationale
