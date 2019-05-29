@@ -110,11 +110,65 @@ After exiting the loop, you need to call lock_release () to release the lock of 
 - The basic principle for implementing these steps is to implement `read` and `write`, and the `search_index_cache()` needs to ensure synchronization, so you need to use lock. In addition, we need to pay special attention to the search index cache function, the main purpose of the function is to find a cache entry to evict and return its index. We need to ensure that `num_sector` is not already in the cache. More importantly, execute the clock algorithm to find slot to evict. In these steps we have to synchronize the variables to ensure that no errors are encountered when accessing different threads.
 ## Task2: Extensible files
 ## Data structure and functions
-### syscall.c
+### filesys.c
+```c
+bool filesys_create (const char *name, off_t initial_size, bool is_dir);
+```
+- Creates a file named NAME with the given INITIAL_SIZE.Returns true if successful, false otherwise.Fails if a file named NAME already exists, or if internal memory allocation fails.
+### inode.c
+```c
+#define DIRECT_BLOCK_COUNT 123
+#define INDIRECT_BLOCK_COUNT 128
+```
+- Block Sector Counts.
+```c
+struct inode
+  {
+    struct list_elem elem;              /* Element in inode list. */
+    block_sector_t sector;              /* Sector number of disk location. */
+    int open_cnt;                       /* Number of openers. */
+    struct lock inode_lock;             /* Inode lock. */
+    bool removed;                       /* True if deleted, false otherwise. */
+    int deny_write_cnt;                 /* 0: writes ok, >0: deny writes. */
+  };
+```
+- inode of in memory
+```c
+struct inode_disk
+  {
+    block_sector_t direct_blocks[DIRECT_BLOCK_COUNT];
+    block_sector_t indirect_block;
+    block_sector_t doubly_indirect_block;
 
-### thread.h
-
-
+    bool is_dir;                        /* Indicator of directory file */
+    off_t length;                       /* File size in bytes. */
+    unsigned magic;                     /* Magic number. */
+  };
+```
+- On-disk inode
+```c
+struct indirect_block_sector
+  {
+    block_sector_t block[INDIRECT_BLOCK_COUNT];
+  };
+```
+- Indirect-block structure.
+```c
+bool allocate_inode (struct inode_disk *disk_inode, off_t length);
+```
+-  Attempts allocating sectors in the order of direct->indirect->d.indirect.
+```c
+bool allocate_indirect_inode (block_sector_t *sector_num, size_t cnt);
+```
+- Allocate indirect block sector.
+```c
+void deallocate_inode (struct inode *inode);
+```
+- Deallocate direct block.
+```c
+void deallocate_indirect_inode(block_sector_t sector_num, size_t cnt);
+```
+- Deallocate indirect block
 ## Algorithm and implenmentation
 
 ## Synchronization
