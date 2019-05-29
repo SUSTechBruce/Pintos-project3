@@ -254,7 +254,18 @@ In order to ensure the correctness and rationality of the program, we implemente
 
 ## Task3: Subdirectories
 ## Data structure and functions
-
+### syscall.c
+```c
+static void syscall_chdir (uint32_t *args UNUSED, uint32_t *eax UNUSED);
+static void syscall_mkdir (uint32_t *args UNUSED, uint32_t *eax UNUSED);
+static void syscall_readdir (uint32_t *args UNUSED, uint32_t *eax UNUSED);
+static void syscall_isdir (uint32_t *args UNUSED, uint32_t *eax UNUSED);
+static void syscall_inumber (uint32_t *args UNUSED, uint32_t *eax UNUSED);
+static void syscall_invcache (uint32_t *args UNUSED, uint32_t *eax UNUSED);
+static void syscall_cachestat (uint32_t *args UNUSED, uint32_t *eax UNUSED);
+static void syscall_diskstat (uint32_t *args UNUSED, uint32_t *eax UNUSED);
+```
+- The syscalls allow user programs to manipulate directories.
 ### thread.h
 ```c
 struct fd
@@ -297,6 +308,15 @@ struct inode_disk {
 };
 ```
 - Add boolean DIR to identify a directory inode.
+```c
+bool inode_is_dir (const struct inode *inode);
+```
+- Returns is_dir of INODE's data.
+```c
+bool inode_create (block_sector_t sector, off_t length, bool is_dir);
+```
+- Adds a boolean DIR parameter to identify a directory inode bool inode_create (block_sector_t sector, off_t length, bool isdir). Initializes an inode with LENGTH bytes of data and writes the new inode to sector SECTOR on the file system
+   device. Returns true if successful.Returns false if memory or disk allocation fails. 
 ## Algorithm and implenmentation
 ### Main Algorithm
 In this task task, we mainly need to implement functions such as `chdir`, `mkdir`, `readdir`, and `isdir`, and complete user program to manipulate directories. Make first user process should have the root directory as its current working directory.
