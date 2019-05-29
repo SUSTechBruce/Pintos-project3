@@ -254,14 +254,67 @@ In order to ensure the correctness and rationality of the program, we implemente
 
 ## Task3: Subdirectories
 ## Data structure and functions
-### syscall.h
 
 ### thread.h
-
-### process.h
-
+```c
+struct fd
+  {
+    int fd_num;
+    struct file *file;
+    struct dir *dir;
+  };
+```
+- struct fd contains struct dir.
+```c
+struct thread {
+  struct dir *working_dir;
+};
+```
+- new add struct to record woring diretory.
+### directory.c
+```c
+struct dir
+  {
+    struct inode *inode;                /* Backing store. */
+    off_t pos;                          /* Current position. */
+    struct lock dir_lock;
+  };
+```
+- A directory
+```c
+struct dir_entry
+  {
+    block_sector_t inode_sector;        /* Sector number of header. */
+    char name[NAME_MAX + 1];            /* Null terminated file name. */
+    bool in_use;                        /* In use or free? */
+  };
+```
+- A single directory entry.
+### inode.c
+```c
+struct inode_disk {
+  bool isdir;
+};
+```
+- Add boolean DIR to identify a directory inode.
 ## Algorithm and implenmentation
-
+### Main Algorithm
+In this task task, we mainly need to implement functions such as `chdir`, `mkdir`, `readdir`, and `isdir`, and complete user program to manipulate directories. Make first user process should have the root directory as its current working directory.
+- **Step1：** Implementing `syscall_chir()` First we need to call dir_open_directory () to get the current dir, if dir is not null, call `dir_close (thread_current ()->working_dir)`, and make the thread's `working_dir` set to the current `dir`, the specific implementation is as follows:
+```c
+struct dir *dir = dir_open_directory (name);
+  if (dir != NULL)
+    {
+      dir_close (thread_current ()->working_dir);
+      thread_current ()->working_dir = dir;
+      *eax = true;
+    }
+  else
+    *eax = false;
+}
+```
+- **Step2:**
+### Specific Algorithm
 
 ## Synchronization
 
