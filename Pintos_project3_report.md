@@ -97,9 +97,17 @@ block_read (fs_device, sector_index, cache[index ].data);
 block_write (fs_device, cache[index].disk_sector_index, cache[index].data);
 ```
 ## Synchronization
-
+- In order to achieve the synchronization of the algorithm, we call the lock acquire() function and the lock release() function on important parameters when implementing the cache read, cache write, cache replace, and search index cache functions. For example, in the search index cache, each time the check to make sure sector_index is not already in the cache step. Call 
+```c
+lock_acquire (&cache[i].cache_block_lock)
+```
+and use it in the Perform clock algorithm to find slot to evict step, call
+```c
+lock_acquire (&cache[i].cache_block_lock);
+```
+After exiting the loop, you need to call lock_release () to release the lock of the parameter.
 ## Rationale
-
+- The basic principle for implementing these steps is to implement `read` and `write`, and the `search_index_cache()` needs to ensure synchronization, so you need to use lock. In addition, we need to pay special attention to the search index cache function, the main purpose of the function is to find a cache entry to evict and return its index. We need to ensure that `num_sector` is not already in the cache. More importantly, execute the clock algorithm to find slot to evict. In these steps we have to synchronize the variables to ensure that no errors are encountered when accessing different threads.
 ## Task2: Extensible files
 ## Data structure and functions
 ### syscall.c
