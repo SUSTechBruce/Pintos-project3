@@ -1,9 +1,85 @@
 
 # Pintos Project3 Report: File System
 :+1: Pintos project_3  - for SUSTech OS  :shipit:
-
+## Group members
+11612201 Wan zhongwei ： Task1, Task2, Final report
+11612121 Liu bin      :  Task2, Task3, Answer Qustion and Reflection
 ## Qustion and Reflection
+- When one process is actively reading or writing data in a buffer cache block, how are other processes prevented from evicting that block?
+```
+Our buffer cache implementation allows multiple readers and a single writer to
+run simultaneously. Our buffer cache is true concurrency because multiple readers
+can read the cache at the same time! We release each lock during memcpy(), 
+block_write() and block_read().
+```
+Specific implementaion:
+```c
+lock_acquire (&cache_update_lock);
+lock_acquire (&cache[i].cache_block_lock);
+lock_release (&cache_update_lock);
+lock_release (&cache[i].cache_block_lock);
+```
 
+- During the eviction of a block from the cache, how are other processes prevented from attempting to access the block?
+```
+During the block_write() procedure, all locks are released. After block_write(),
+we set the refresh bit to false and set the sector_id to the new sector ID.
+```
+Specific implementaions:
+```c
+lock_acquire (&cache[i].cache_block_lock);
+      if (!cache[i].valid)
+        {
+          lock_release (&cache_update_lock);
+          return i;
+        }
+      if (cache[i].chances_remaining == 0)
+        break;
+      cache[i].chances_remaining--;
+      lock_release (&cache[i].cache_block_lock);
+    }
+  lock_release (&cache_update_lock);
+```
+- If a block is currently being loaded into the cache, how are other processes prevented from also loading it into a different cache entry? How are other processes prevented from accessing the block before it is fully loaded?
+```
+1. In response to this problem, we also use the lock acquire method to solve 
+this problem. When a block is currently loaded into the cache, we use lock 
+acquire() to lock the block and prevent other process from continuing to call_
+the block. When loading is finished, lock_release(). 2.  For the second problem,
+also use lock acquire, so that only after the process ends the block loading
+fully, other threads are eligible to get the block.
+```
+- How will your filesystem take a relative path like ../my_files/notes.txt and locate the corre- sponding directory? Also, how will you locate absolute paths like /cs162/solutions.md?
+```
+Each tokenized part of the directory path is associated with its own inode 
+and dir structure. By treating each level in the directory tree as a separate 
+directory, we can recursively traverse the "tree" and simplify the logic of 
+accessing different files/directories. In addition, by keeping the first dir 
+entry as the holder of the parent directory sector, it allows us to easily 
+handle the " ../my_files/notes.txt" situation when parsing the directory tree.
+The same as /cs162/solutions.md because the implementaiion has involved the solution.
+```
+- Will a user process be allowed to delete a directory if it is the cwd of a running process? The test suite will accept both “yes” and “no”, but in either case, you must make sure that new files cannot be created in deleted directories.
+```
+If a directory is the cwd of a running process, the directory is locked by 
+lock_acquire() function, a user process may not have the privilege to delete 
+the directory.
+```
+- How will your syscall handlers take a file descriptor, like 3, and locate the corresponding file or directory struct?
+```
+First, we also determine if the format of the parameter is legal, call `args_valid()`, 
+if it is not legal, return -1 and call `exit()`. Second, use get file to get the current
+thread's file for judgment. If it is legal, call `file_get_inode()` to get the current 
+file inode. And call `inode_is_dir ()` to return the `eax` value.
+```
+```c
+  struct file *f_name = get_file (thread_current (), fd);
+  if (file)
+    {
+      struct inode *inode_ele = file_get_inode (f_name);
+      *eax = inode_is_dir (inode_ele);
+    }
+```
 ## Task 1: Buffer cache
 ## I.Data structures and functions
 ### 
