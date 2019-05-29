@@ -80,7 +80,22 @@ void filesys_init(bool format);
 - The main purpose of this Buffer cache is to design a cache in the filesystem to improve the performance of reading and writing, so the main algorithm is we can respond to reads with cached data and we can coalesce multiple writes into a single disk operation. And We choose a block replacement policy and we design a write-back cache efficiently.
 ### Specific Algorithms
 - **Step1:** First, we need to design a function to initialize the cache called `initialize_cache()`. This function first initializes the lock, the purpose is to lock the `cache_update_lock` variable. Second, for each `block` in the cache, we set its valid bit to false and call `lock_init()` to lock the block variable.
+- **Step2:** Second, we need to modify `filess_init()` and add `initialize_cache()` in it in order to initialize cache every time when you want to start filesystem.
+- **Step3:** in this step, it is time to implement a function called`search_cache_index()`in order to find a cache entry  to pop and return its index. So we choose clock algorithm to achieve this goal. first, we a pointer called `clock_p`, and then we call `lock_acquire()` to lock this variable `cache_update_lock`. the next step is call lock_acquire to lock blocks in `cache_block` and we need to iterate cache to make sure there is no `num_sector`. Next, if the `num_sector` is in this cache, we release the lock for this `block`. We have reached the key steps of the clock algorithm. First, we check if the valid bit is legal. If it is legal, return the index of the block, then check the remaining chance to see if it is 0. If it is 0, break. Next we should release this lock, as well as the `cache_update_lock`. In the outer loop, if the block is detected as `dirty`, set the valid to false and return the `index`.
+- **Step4:** In this step, we need to design a cache write function according to task1 requirements. The purpose of this function is write `chunk_size` bytes of data into cache starting from `numsector` at position offest from source. The core algorithm is to use `cache_get_block_index()` acquires `cache_block_lock` at `index` i. Then set the block's `dirty bit` to true and change the remaining_chance.
+- **Step5:**  Read operations and write operations have similarities, the purpose is read chunk_size bytes of data from cache starting from numsector at position offest, into destination. We also need to complete `cache_get_block_index ()` acquires `cache_block_lock` at `index` i. Then call 
+```c
+memcpy (destination, cache[i ].data + offset, chunk_size);
+```.
 
+- **Step6** Next, implement a function replace cache(), the purpose is to replace the cache entry at index to contain data from sector_index. The core algorithm is Read in and write from device at `disk_sector_index` to data. We need to call 
+```c
+block_read (fs_device, sector_index, cache[index ].data);
+```
+- **Step6:** Next we need to implement another important function, the purpose of this function is to write the block at index to disk, the core algorithm step is very simple, that is, write from data to device at disk sector index. So we need to call
+```c
+block_write (fs_device, cache[index].disk_sector_index, cache[index].data);
+```
 ## Synchronization
 
 ## Rationale
