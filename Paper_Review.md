@@ -35,3 +35,5 @@
 ### 1. If necessary, some further qualification or explanation of your judgment can be included.
 - The paper is excellent but lack of source code to read.
 ### 5. Include a list of references at the end.
+ - CONF Zeiler, Matthew D. Fergus, Rob Fleet, David Pajdla, Tomas Schiele, Bernt Tuytelaars, Tinne 2014 Visualizing and Understanding Convolutional Networks Computer Vision – ECCV 2014 818 833 Springer International Publishing Cham  978-3-319-10590-110.1007/978-3-319-10590-1_53
+ 
